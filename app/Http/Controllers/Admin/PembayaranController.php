@@ -30,7 +30,8 @@ class PembayaranController extends Controller
      */
     public function create()
     {
-        $siswa = Siswa::with(['kelas', 'spp'])->get();
+        // $siswa = Siswa::with(['kelas', 'spp'])->get();
+        $siswa = Siswa::with('spp')->get();
         $bulan = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
         return view('admin.pembayaran.create', compact('siswa', 'bulan'));
     }

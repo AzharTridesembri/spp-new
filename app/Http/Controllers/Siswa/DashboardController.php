@@ -15,8 +15,8 @@ class DashboardController extends Controller
      */
     public function index()
     {
-        // Ambil data siswa pertama sebagai contoh (dummy)
-        $siswa = Siswa::first();
+        // Ambil data siswa berdasarkan user yang login
+        $siswa = Siswa::where('user_id', auth()->id())->first();
 
         if (!$siswa) {
             return view('siswa.dashboard', [

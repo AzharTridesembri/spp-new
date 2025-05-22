@@ -12,7 +12,14 @@ class HistoryController extends Controller
      */
     public function index()
     {
-        return view('siswa.history.index');
+        $siswa = \App\Models\Siswa::where('user_id', auth()->id())->first();
+        $pembayaran = [];
+        if ($siswa) {
+            $pembayaran = \App\Models\Pembayaran::where('siswa_id', $siswa->id)
+                ->orderBy('tanggal_bayar', 'desc')
+                ->get();
+        }
+        return view('siswa.history.index', compact('pembayaran', 'siswa'));
     }
 
     /**

@@ -37,7 +37,6 @@
                                     <span class="text-red-500 text-xs">{{ $message }}</span>
                                 @enderror
                             </div>
-
                             <div>
                                 <label for="tanggal_bayar" class="block text-sm font-medium text-gray-700 mb-1">Tanggal Bayar *</label>
                                 <input type="date" id="tanggal_bayar" name="tanggal_bayar" value="{{ old('tanggal_bayar', date('Y-m-d')) }}" class="w-full rounded-md shadow-sm border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 @error('tanggal_bayar') border-red-500 @enderror" required>
@@ -45,7 +44,6 @@
                                     <span class="text-red-500 text-xs">{{ $message }}</span>
                                 @enderror
                             </div>
-
                             <div class="md:col-span-2">
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Bulan Dibayar *</label>
                                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -60,7 +58,6 @@
                                     <span class="text-red-500 text-xs">{{ $message }}</span>
                                 @enderror
                             </div>
-
                             <div>
                                 <label for="tahun_dibayar" class="block text-sm font-medium text-gray-700 mb-1">Tahun Dibayar *</label>
                                 <input type="number" id="tahun_dibayar" name="tahun_dibayar" value="{{ old('tahun_dibayar', date('Y')) }}" min="2000" max="{{ date('Y') + 1 }}" class="w-full rounded-md shadow-sm border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 @error('tahun_dibayar') border-red-500 @enderror" required>
@@ -68,20 +65,17 @@
                                     <span class="text-red-500 text-xs">{{ $message }}</span>
                                 @enderror
                             </div>
-
                             <div>
                                 <label for="jumlah_bayar" class="block text-sm font-medium text-gray-700 mb-1">Jumlah Bayar *</label>
                                 <input type="text" name="jumlah_bayar" id="jumlah_bayar" value="{{ old('jumlah_bayar') }}" class="w-full rounded-md shadow-sm border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 @error('jumlah_bayar') border-red-500 @enderror" readonly>
+                                <div id="total_rupiah" class="mt-1 text-green-700 font-bold text-lg"></div>
                                 @error('jumlah_bayar')
                                     <span class="text-red-500 text-xs">{{ $message }}</span>
                                 @enderror
                             </div>
                         </div>
-
-                        <div class="mt-6">
-                            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition">
-                                {{ __('Simpan') }}
-                            </button>
+                        <div class="mt-6 flex justify-end">
+                            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded">Simpan</button>
                         </div>
                     </form>
                 </div>
@@ -89,63 +83,68 @@
         </div>
     </div>
 
-    @push('scripts')
     <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            const siswaSelect = document.getElementById('siswa_id');
-            const tahunInput = document.getElementById('tahun_dibayar');
-            const bulanCheckboxes = document.querySelectorAll('input[name="bulan_dibayar[]"]');
-            const jumlahBayarInput = document.getElementById('jumlah_bayar');
+    document.addEventListener("DOMContentLoaded", function() {
+        const siswaSelect = document.getElementById('siswa_id');
+        const tahunInput = document.getElementById('tahun_dibayar');
+        const bulanCheckboxes = document.querySelectorAll('input[name=\"bulan_dibayar[]\"]');
+        const jumlahBayarInput = document.getElementById('jumlah_bayar');
+        const totalRupiah = document.getElementById('total_rupiah');
 
-            function updateJumlahBayar() {
-                const selectedOption = siswaSelect.options[siswaSelect.selectedIndex];
-                if (selectedOption.value !== '') {
-                    const sppNominal = parseInt(selectedOption.getAttribute('data-spp'));
-                    const selectedMonths = document.querySelectorAll('input[name="bulan_dibayar[]"]:checked:not(:disabled)').length;
-                    const totalBayar = sppNominal * selectedMonths;
-                    jumlahBayarInput.value = totalBayar.toLocaleString('id-ID');
-                } else {
-                    jumlahBayarInput.value = '';
-                }
+        function formatRupiah(angka) {
+            return 'Rp ' + angka.toLocaleString('id-ID');
+        }
+
+        function updateJumlahBayar() {
+            const selectedOption = siswaSelect.options[siswaSelect.selectedIndex];
+            if (selectedOption.value !== '') {
+                const sppNominal = parseInt(selectedOption.getAttribute('data-spp')) || 0;
+                const selectedMonths = document.querySelectorAll('input[name=\"bulan_dibayar[]\"]:checked:not(:disabled)').length;
+                const totalBayar = sppNominal * selectedMonths;
+                jumlahBayarInput.value = totalBayar;
+                totalRupiah.textContent = totalBayar > 0 ? formatRupiah(totalBayar) : '';
+            } else {
+                jumlahBayarInput.value = '';
+                totalRupiah.textContent = '';
             }
+        }
 
-            function updateBulanCheckboxes() {
-                const siswaId = siswaSelect.value;
-                const tahun = tahunInput.value;
-                if (!siswaId || !tahun) return;
+        function updateBulanCheckboxes() {
+            const siswaId = siswaSelect.value;
+            const tahun = tahunInput.value;
+            if (!siswaId || !tahun) return;
 
-                fetch(`/api/pembayaran/bulan-sudah-dibayar?siswa_id=${siswaId}&tahun=${tahun}`)
-                    .then(response => response.json())
-                    .then(sudahDibayar => {
-                        bulanCheckboxes.forEach(cb => {
-                            const label = cb.parentElement.querySelector('label');
-                            if (sudahDibayar.includes(cb.value)) {
-                                cb.checked = true;
-                                cb.disabled = true;
-                                label.innerHTML = cb.value + ' <span style="color:green;font-size:11px;">(Sudah dibayar)</span>';
-                            } else {
-                                cb.checked = false;
-                                cb.disabled = false;
-                                label.innerHTML = cb.value;
-                            }
-                        });
-                        updateJumlahBayar();
+            fetch(`/api/pembayaran/bulan-sudah-dibayar?siswa_id=${siswaId}&tahun=${tahun}`)
+                .then(response => response.json())
+                .then(sudahDibayar => {
+                    bulanCheckboxes.forEach(cb => {
+                        const label = cb.parentElement.querySelector('label');
+                        if (sudahDibayar.includes(cb.value)) {
+                            cb.checked = true;
+                            cb.disabled = true;
+                            label.innerHTML = cb.value + ' <span style=\"color:green;font-size:11px;\">(Sudah dibayar)</span>';
+                        } else {
+                            cb.checked = false;
+                            cb.disabled = false;
+                            label.innerHTML = cb.value;
+                        }
                     });
-            }
+                    updateJumlahBayar();
+                });
+        }
 
-            siswaSelect.addEventListener('change', function() {
-                updateBulanCheckboxes();
-            });
-            tahunInput.addEventListener('change', function() {
-                updateBulanCheckboxes();
-            });
-            bulanCheckboxes.forEach(cb => {
-                cb.addEventListener('change', updateJumlahBayar);
-            });
-
-            // Inisialisasi saat halaman pertama kali dibuka
+        siswaSelect.addEventListener('change', function() {
             updateBulanCheckboxes();
         });
+        tahunInput.addEventListener('change', function() {
+            updateBulanCheckboxes();
+        });
+        bulanCheckboxes.forEach(cb => {
+            cb.addEventListener('change', updateJumlahBayar);
+        });
+
+        // Inisialisasi saat halaman pertama kali dibuka
+        updateBulanCheckboxes();
+    });
     </script>
-    @endpush
 </x-app-layout> 
