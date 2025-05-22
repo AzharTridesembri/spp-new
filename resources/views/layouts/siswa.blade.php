@@ -69,6 +69,12 @@
                     <a href="{{ route('siswa.history.index') }}" class="flex items-center px-4 py-2 rounded-xl hover:bg-indigo-700/80 hover:scale-105 transition-all duration-200 {{ request()->routeIs('siswa.history.*') ? 'bg-indigo-700/90' : '' }}">
                         <i class="fas fa-receipt mr-3 sidebar-icon"></i> <span class="sidebar-label">Riwayat Pembayaran</span>
                     </a>
+                    <form action="{{ route('logout') }}" method="POST" class="m-0">
+                        @csrf
+                        <button type="submit" class="w-full flex items-center px-4 py-2 rounded-xl hover:bg-indigo-700/80 hover:scale-105 transition-all duration-200">
+                            <i class="fas fa-sign-out-alt mr-3 sidebar-icon"></i> <span class="sidebar-label">Logout</span>
+                        </button>
+                    </form>
                 </nav>
             </aside>
 
@@ -85,6 +91,12 @@
                         <a href="{{ route('siswa.history.index') }}" class="flex items-center px-4 py-2 rounded-xl hover:bg-indigo-700/80 hover:scale-105 transition-all duration-200 {{ request()->routeIs('siswa.history.*') ? 'bg-indigo-700/90' : '' }}">
                             <i class="fas fa-receipt mr-3 sidebar-icon"></i> <span class="sidebar-label">Riwayat Pembayaran</span>
                         </a>
+                        <form action="{{ route('logout') }}" method="POST" class="m-0">
+                            @csrf
+                            <button type="submit" class="w-full flex items-center px-4 py-2 rounded-xl hover:bg-indigo-700/80 hover:scale-105 transition-all duration-200">
+                                <i class="fas fa-sign-out-alt mr-3 sidebar-icon"></i> <span class="sidebar-label">Logout</span>
+                            </button>
+                        </form>
                     </nav>
                 </aside>
             </div>

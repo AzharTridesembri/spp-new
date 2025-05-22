@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Route;
 
 // Landing Page
 Route::get('/', function () {
-    return view('welcome');
+    return redirect()->route('login')->with('status', 'Anda harus login terlebih dahulu');
 });
 
 // Dashboard redirect
