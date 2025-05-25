@@ -61,3 +61,83 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+## Cara Instalasi
+
+Ikuti langkah-langkah berikut untuk menginstal dan menjalankan proyek ini di lingkungan lokal Anda:
+
+1.  **Clone Repository:**
+
+    ```bash
+    git clone https://github.com/AzharTridesembri/spp-new.git
+    cd spp-new
+    ```
+
+2.  **Instal Dependensi PHP (menggunakan Composer):**
+
+    ```bash
+    composer install
+    ```
+
+3.  **Instal Dependensi JavaScript (menggunakan npm):**
+
+    ```bash
+    npm install
+    ```
+
+4.  **Salin File Environment:**
+
+    ```bash
+    cp .env.example .env
+    ```
+
+5.  **Generate Application Key:**
+
+    ```bash
+    php artisan key:generate
+    ```
+
+6.  **Konfigurasi Database:**
+
+    Buka file `.env` dan atur detail koneksi database Anda (misalnya, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`).
+
+    ```ini
+    DB_CONNECTION=mysql
+    DB_HOST=127.0.0.1
+    DB_PORT=3306
+    DB_DATABASE=nama_database_anda
+    DB_USERNAME=username_database_anda
+    DB_PASSWORD=password_database_anda
+    ```
+
+7.  **Jalankan Migrasi Database:**
+
+    ```bash
+    php artisan migrate
+    ```
+
+8.  **Jalankan Seeder (Opsional, jika ada data dummy):**
+
+    ```bash
+    php artisan db:seed
+    ```
+
+9.  **Build Frontend Assets (menggunakan Vite):**
+
+    ```bash
+    npm run build
+    ```
+
+10. **Jalankan Server Pengembangan:**
+
+    ```bash
+    php artisan serve
+    ```
+
+    Atau jika Anda menggunakan Vite:
+
+    ```bash
+    php artisan serve & npm run dev
+    ```
+
+Sekarang proyek seharusnya bisa diakses di browser Anda (biasanya di `http://127.0.0.1:8000`).
