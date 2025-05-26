@@ -25,7 +25,7 @@
             <thead class="bg-gray-100 text-gray-700 sticky top-0 z-10">
                 <tr>
                     <th class="py-3 px-4 text-left whitespace-nowrap">No</th>
-                    <th class="py-3 px-4 text-left whitespace-nowrap">Petugas</th>
+                    <th class="py-3 px-4 text-left whitespace-nowrap">admin</th>
                     <th class="py-3 px-4 text-left whitespace-nowrap">Siswa</th>
                     <th class="py-3 px-4 text-left whitespace-nowrap hidden md:table-cell">NISN</th>
                     <th class="py-3 px-4 text-left whitespace-nowrap hidden lg:table-cell">Kelas</th>
@@ -36,9 +36,9 @@
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-200">
-                @forelse ($pembayarans as $index => $item)
+                @forelse ($pembayaran as $index => $item)
                     <tr class="hover:bg-blue-50 transition">
-                        <td class="py-3 px-4">{{ $index + $pembayarans->firstItem() }}</td>
+                        <td class="py-3 px-4">{{ $index + $pembayaran->firstItem() }}</td>
                         <td class="py-3 px-4">{{ $item->user->name ?? '-' }}</td>
                         <td class="py-3 px-4 font-semibold text-blue-700">{{ $item->siswa->nama }}</td>
                         <td class="py-3 px-4 hidden md:table-cell">{{ $item->siswa->nisn }}</td>
@@ -72,7 +72,7 @@
             </tbody>
         </table>
         <div class="mt-4 px-4">
-            {{ $pembayarans->links() }}
+            {{ $pembayaran->links() }}
         </div>
     </div>
 </div>

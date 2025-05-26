@@ -11,8 +11,6 @@ use App\Models\Spp;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Validator;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 
 class PembayaranController extends Controller
 {
@@ -21,8 +19,8 @@ class PembayaranController extends Controller
      */
     public function index()
     {
-        $pembayarans = Pembayaran::with(['user', 'siswa.kelas', 'siswa.spp'])->latest()->paginate(10);
-        return view('admin.pembayaran.index', compact('pembayarans'));
+        $pembayaran = Pembayaran::with(['user', 'siswa.kelas', 'siswa.spp'])->latest()->paginate(10);
+        return view('admin.pembayaran.index', compact('pembayaran'));
     }
 
     /**
@@ -30,7 +28,6 @@ class PembayaranController extends Controller
      */
     public function create()
     {
-        // $siswa = Siswa::with(['kelas', 'spp'])->get();
         $siswa = Siswa::with('spp')->get();
         $bulan = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
         return view('admin.pembayaran.create', compact('siswa', 'bulan'));
@@ -41,139 +38,109 @@ class PembayaranController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
+        $validator = Validator::make($request->all(), [
             'siswa_id' => 'required|exists:siswas,id',
             'tanggal_bayar' => 'required|date',
             'bulan_dibayar' => 'required|array|min:1',
-            'bulan_dibayar.*' => 'required|string',
-            'tahun_dibayar' => 'required|integer',
+            'bulan_dibayar.*' => 'required|in:Januari,Februari,Maret,April,Mei,Juni,Juli,Agustus,September,Oktober,November,Desember',
+            'tahun_dibayar' => 'required|digits:4|integer|min:2000|max:' . (date('Y') + 1),
         ]);
 
-        $siswa = Siswa::findOrFail($request->siswa_id);
-        $spp = Spp::findOrFail($siswa->spp_id);
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
 
-        $jumlah_bulan = count($request->bulan_dibayar);
-        $jumlah_bayar = $spp->nominal * $jumlah_bulan;
+        // Ambil data SPP siswa
+        $siswa = Siswa::with('spp')->findOrFail($request->siswa_id);
+        $nominalSpp = $siswa->spp->nominal;
 
-        // Cek pembayaran ganda
-        $existing = Pembayaran::where('siswa_id', $request->siswa_id)
+        // Cek pembayaran yang sudah ada
+        $existingPayments = Pembayaran::where('siswa_id', $request->siswa_id)
             ->whereIn('bulan_dibayar', $request->bulan_dibayar)
             ->where('tahun_dibayar', $request->tahun_dibayar)
             ->pluck('bulan_dibayar')
             ->toArray();
 
-        if (!empty($existing)) {
-            return back()->with('error', 'Pembayaran untuk bulan: ' . implode(', ', $existing) . ' sudah ada.');
+        if (!empty($existingPayments)) {
+            return redirect()->back()
+                ->with('error', 'Pembayaran untuk bulan ' . implode(', ', $existingPayments) . ' sudah dilakukan')
+                ->withInput();
         }
 
-        try {
-            DB::beginTransaction();
-            foreach ($request->bulan_dibayar as $bulan) {
-                Pembayaran::create([
-                    'user_id' => 1,
-                    'siswa_id' => $request->siswa_id,
-                    'tanggal_bayar' => $request->tanggal_bayar,
-                    'bulan_dibayar' => $bulan,
-                    'tahun_dibayar' => $request->tahun_dibayar,
-                    'jumlah_bayar' => $spp->nominal,
-                ]);
-            }
-            DB::commit();
-            return redirect()->route('admin.pembayaran.index')->with('success', 'Pembayaran berhasil.');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+        // Simpan pembayaran per bulan
+        foreach ($request->bulan_dibayar as $bulan) {
+            Pembayaran::create([
+                'user_id' => auth()->id(),
+                'siswa_id' => $request->siswa_id,
+                'tanggal_bayar' => $request->tanggal_bayar,
+                'bulan_dibayar' => $bulan,
+                'tahun_dibayar' => $request->tahun_dibayar,
+                'jumlah_bayar' => $nominalSpp,
+            ]);
         }
+
+        return redirect()->route('admin.pembayaran.index')->with('success', 'Pembayaran berhasil ditambahkan');
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(Pembayaran $pembayaran)
+    public function show(string $id)
     {
+        $pembayaran = Pembayaran::with(['user', 'siswa.kelas', 'siswa.spp'])->findOrFail($id);
         return view('admin.pembayaran.show', compact('pembayaran'));
     }
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Pembayaran $pembayaran)
+    public function edit(string $id)
     {
-        $siswas = Siswa::all();
-        $spps = Spp::all();
-        return view('admin.pembayaran.edit', compact('pembayaran', 'siswas', 'spps'));
+        $pembayaran = Pembayaran::findOrFail($id);
+        $siswa = Siswa::with('spp')->get();
+        $bulan = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+        return view('admin.pembayaran.edit', compact('pembayaran', 'siswa', 'bulan'));
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Pembayaran $pembayaran)
+    public function update(Request $request, string $id)
     {
-        $request->validate([
+        $validator = Validator::make($request->all(), [
             'siswa_id' => 'required|exists:siswas,id',
             'tanggal_bayar' => 'required|date',
-            'bulan_dibayar' => 'required|string',
-            'tahun_dibayar' => 'required|integer',
-            'jumlah_bayar' => 'required|numeric',
+            'bulan_dibayar' => 'required|in:Januari,Februari,Maret,April,Mei,Juni,Juli,Agustus,September,Oktober,November,Desember',
+            'tahun_dibayar' => 'required|digits:4|integer|min:2000|max:' . (date('Y') + 1),
+            'jumlah_bayar' => 'required|integer',
         ]);
 
-        // Cek apakah sudah ada pembayaran untuk bulan dan tahun yang sama
-        $existingPayment = Pembayaran::where('siswa_id', $request->siswa_id)
-            ->where('bulan_dibayar', $request->bulan_dibayar)
-            ->where('tahun_dibayar', $request->tahun_dibayar)
-            ->where('id', '!=', $pembayaran->id)
-            ->first();
-
-        if ($existingPayment) {
-            return back()->with('error', 'Pembayaran untuk bulan dan tahun ini sudah ada.');
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
         }
 
-        // Dapatkan SPP untuk siswa ini
-        $siswa = Siswa::findOrFail($request->siswa_id);
-        $spp = Spp::findOrFail($siswa->spp_id);
+        $pembayaran = Pembayaran::findOrFail($id);
+        $pembayaran->update([
+            'user_id' => 1,
+            'siswa_id' => $request->siswa_id,
+            'tanggal_bayar' => $request->tanggal_bayar,
+            'bulan_dibayar' => $request->bulan_dibayar,
+            'tahun_dibayar' => $request->tahun_dibayar,
+            'jumlah_bayar' => $request->jumlah_bayar,
+        ]);
 
-        // Validasi jumlah pembayaran
-        if ($request->jumlah_bayar < $spp->nominal) {
-            return back()->with('error', 'Jumlah pembayaran kurang dari nominal SPP.');
-        }
-
-        try {
-            DB::beginTransaction();
-
-            $pembayaran->update([
-                'siswa_id' => $request->siswa_id,
-                'tanggal_bayar' => $request->tanggal_bayar,
-                'bulan_dibayar' => $request->bulan_dibayar,
-                'tahun_dibayar' => $request->tahun_dibayar,
-                'jumlah_bayar' => $request->jumlah_bayar,
-            ]);
-
-            DB::commit();
-
-            return redirect()->route('admin.pembayaran.index')
-                ->with('success', 'Pembayaran berhasil diperbarui.');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
-        }
+        return redirect()->route('admin.pembayaran.index')->with('success', 'Pembayaran berhasil diperbarui');
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Pembayaran $pembayaran)
+    public function destroy(string $id)
     {
-        try {
-            DB::beginTransaction();
-            $pembayaran->delete();
-            DB::commit();
+        $pembayaran = Pembayaran::findOrFail($id);
+        $pembayaran->delete();
 
-            return redirect()->route('admin.pembayaran.index')
-                ->with('success', 'Pembayaran berhasil dihapus.');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
-        }
+        return redirect()->route('admin.pembayaran.index')->with('success', 'Pembayaran berhasil dihapus');
     }
 
     /**
@@ -201,13 +168,16 @@ class PembayaranController extends Controller
 
         $pembayaran = $query->latest()->get();
 
-        $bulanList = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-        $tahunList = range(date('Y') - 5, date('Y'));
-
-        if ($request->has('export_pdf')) {
+        if ($request->has('download')) {
             $pdf = PDF::loadView('admin.pembayaran.laporan', compact('pembayaran', 'tanggal', 'bulan', 'tahun'));
             return $pdf->download('laporan-pembayaran-' . time() . '.pdf');
+        } elseif ($request->has('preview')) {
+            $pdf = PDF::loadView('admin.pembayaran.laporan', compact('pembayaran', 'tanggal', 'bulan', 'tahun'));
+            return $pdf->stream('laporan-pembayaran-' . time() . '.pdf');
         }
+
+        $bulanList = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+        $tahunList = range(date('Y') - 5, date('Y'));
 
         return view('admin.pembayaran.laporan-form', compact('pembayaran', 'bulanList', 'tahunList', 'tanggal', 'bulan', 'tahun'));
     }
@@ -217,19 +187,17 @@ class PembayaranController extends Controller
      */
     public function bulanSudahDibayar(Request $request)
     {
-        $request->validate([
-            'siswa_id' => 'required|exists:siswas,id',
-            'bulan' => 'required|string',
-            'tahun' => 'required|integer',
-        ]);
+        $siswa_id = $request->siswa_id;
+        $tahun = $request->tahun;
 
-        $pembayaran = Pembayaran::where('siswa_id', $request->siswa_id)
-            ->where('bulan_dibayar', $request->bulan)
-            ->where('tahun_dibayar', $request->tahun)
-            ->first();
+        $sudahDibayar = [];
+        if ($siswa_id && $tahun) {
+            $sudahDibayar = Pembayaran::where('siswa_id', $siswa_id)
+                ->where('tahun_dibayar', $tahun)
+                ->pluck('bulan_dibayar')
+                ->toArray();
+        }
 
-        return response()->json([
-            'sudah_dibayar' => $pembayaran !== null
-        ]);
+        return response()->json($sudahDibayar);
     }
 }

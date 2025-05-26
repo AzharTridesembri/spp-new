@@ -51,9 +51,9 @@
                                 </button>
                                 
                                 @if(count($pembayaran) > 0)
-                                <button type="submit" name="export_pdf" value="1" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition">
-                                    <i class="fas fa-file-pdf mr-1"></i> Export PDF
-                                </button>
+                                <a href="{{ route('admin.laporan', array_merge(request()->query(), ['preview' => 1])) }}" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition">
+                                    <i class="fas fa-file-pdf mr-1"></i> Preview PDF
+                                </a>
                                 @endif
                             </div>
                         </form>

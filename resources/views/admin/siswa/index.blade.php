@@ -6,9 +6,17 @@
 <div class="bg-white rounded-lg shadow-md">
     <div class="p-6 flex flex-col md:flex-row md:justify-between md:items-center border-b gap-4">
         <h2 class="text-xl font-semibold text-gray-800">Daftar Siswa</h2>
-        <a href="{{ route('admin.siswa.create') }}" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg flex items-center gap-2">
-            <i class="fas fa-user-plus"></i> <span class="hidden sm:inline">Tambah Siswa</span>
-        </a>
+        <div class="flex items-center space-x-2">
+            <form action="{{ route('admin.siswa.index') }}" method="GET" class="flex items-center space-x-2">
+                <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari siswa..." class="form-input rounded-md shadow-sm mt-1 block w-full md:w-auto">
+                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg flex items-center gap-2">
+                    <i class="fas fa-search"></i> Cari
+                </button>
+            </form>
+            <a href="{{ route('admin.siswa.create') }}" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg flex items-center gap-2">
+                <i class="fas fa-user-plus"></i> <span class="hidden sm:inline">Tambah Siswa</span>
+            </a>
+        </div>
     </div>
     @if(session('success'))
     <div class="m-6 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative" role="alert">
@@ -47,6 +55,9 @@
                     <td class="py-3 px-4 flex items-center justify-center space-x-2">
                         <a href="{{ route('admin.siswa.edit', $siswa->id) }}" class="p-2 bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200" title="Edit">
                             <i class="fas fa-edit"></i>
+                        </a>
+                        <a href="{{ route('admin.siswa.paymentHistory', $siswa->id) }}" class="p-2 bg-blue-100 text-blue-700 rounded hover:bg-blue-200" title="Lihat Riwayat Pembayaran">
+                            <i class="fas fa-history"></i>
                         </a>
                         <form action="{{ route('admin.siswa.destroy', $siswa->id) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus siswa ini?')" class="inline">
                             @csrf

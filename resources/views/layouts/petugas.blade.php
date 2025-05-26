@@ -66,6 +66,9 @@
                     <a href="{{ route('petugas.dashboard') }}" class="flex items-center px-4 py-2 rounded-xl hover:bg-emerald-700/80 hover:scale-105 transition-all duration-200 {{ request()->routeIs('petugas.dashboard') ? 'bg-emerald-700/90' : '' }}">
                         <i class="fas fa-home mr-3 sidebar-icon"></i> <span class="sidebar-label">Dashboard</span>
                     </a>
+                    <a href="{{ route('petugas.siswa.index') }}" class="flex items-center px-4 py-2 rounded-xl hover:bg-emerald-700/80 hover:scale-105 transition-all duration-200 {{ request()->routeIs('petugas.siswa.*') ? 'bg-emerald-700/90' : '' }}">
+                        <i class="fas fa-users mr-3 sidebar-icon"></i> <span class="sidebar-label">Data Siswa</span>
+                    </a>
                     <a href="{{ route('petugas.pembayaran.index') }}" class="flex items-center px-4 py-2 rounded-xl hover:bg-emerald-700/80 hover:scale-105 transition-all duration-200 {{ request()->routeIs('petugas.pembayaran.*') ? 'bg-emerald-700/90' : '' }}">
                         <i class="fas fa-money-bill-wave mr-3 sidebar-icon"></i> <span class="sidebar-label">Pembayaran</span>
                     </a>
@@ -90,6 +93,9 @@
                     <nav class="space-y-2 mt-8">
                         <a href="{{ route('petugas.dashboard') }}" class="flex items-center px-4 py-2 rounded-xl hover:bg-emerald-700/80 hover:scale-105 transition-all duration-200 {{ request()->routeIs('petugas.dashboard') ? 'bg-emerald-700/90' : '' }}">
                             <i class="fas fa-home mr-3 sidebar-icon"></i> <span class="sidebar-label">Dashboard</span>
+                        </a>
+                        <a href="{{ route('petugas.siswa.index') }}" class="flex items-center px-4 py-2 rounded-xl hover:bg-emerald-700/80 hover:scale-105 transition-all duration-200 {{ request()->routeIs('petugas.siswa.*') ? 'bg-emerald-700/90' : '' }}">
+                            <i class="fas fa-users mr-3 sidebar-icon"></i> <span class="sidebar-label">Data Siswa</span>
                         </a>
                         <a href="{{ route('petugas.pembayaran.index') }}" class="flex items-center px-4 py-2 rounded-xl hover:bg-emerald-700/80 hover:scale-105 transition-all duration-200 {{ request()->routeIs('petugas.pembayaran.*') ? 'bg-emerald-700/90' : '' }}">
                             <i class="fas fa-money-bill-wave mr-3 sidebar-icon"></i> <span class="sidebar-label">Pembayaran</span>

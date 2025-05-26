@@ -67,8 +67,7 @@
                             </div>
                             <div>
                                 <label for="jumlah_bayar" class="block text-sm font-medium text-gray-700 mb-1">Jumlah Bayar *</label>
-                                <input type="text" name="jumlah_bayar" id="jumlah_bayar" value="{{ old('jumlah_bayar') }}" class="w-full rounded-md shadow-sm border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 @error('jumlah_bayar') border-red-500 @enderror" readonly>
-                                <div id="total_rupiah" class="mt-1 text-green-700 font-bold text-lg"></div>
+                                <input type="text" name="jumlah_bayar" id="jumlah_bayar" value="{{ old('jumlah_bayar') }}" class="w-full rounded-md shadow-sm border-gray-300 focus:border-green-500 focus:ring-green-500 text-green-600 font-bold" autocomplete="off">
                                 @error('jumlah_bayar')
                                     <span class="text-red-500 text-xs">{{ $message }}</span>
                                 @enderror
@@ -89,10 +88,11 @@
         const tahunInput = document.getElementById('tahun_dibayar');
         const bulanCheckboxes = document.querySelectorAll('input[name=\"bulan_dibayar[]\"]');
         const jumlahBayarInput = document.getElementById('jumlah_bayar');
-        const totalRupiah = document.getElementById('total_rupiah');
 
         function formatRupiah(angka) {
-            return 'Rp ' + angka.toLocaleString('id-ID');
+            angka = angka.replace(/[^0-9]/g, '');
+            if (!angka) return '';
+            return 'Rp ' + parseInt(angka, 10).toLocaleString('id-ID');
         }
 
         function updateJumlahBayar() {
@@ -101,11 +101,9 @@
                 const sppNominal = parseInt(selectedOption.getAttribute('data-spp')) || 0;
                 const selectedMonths = document.querySelectorAll('input[name=\"bulan_dibayar[]\"]:checked:not(:disabled)').length;
                 const totalBayar = sppNominal * selectedMonths;
-                jumlahBayarInput.value = totalBayar;
-                totalRupiah.textContent = totalBayar > 0 ? formatRupiah(totalBayar) : '';
+                jumlahBayarInput.value = totalBayar ? formatRupiah(totalBayar.toString()) : '';
             } else {
                 jumlahBayarInput.value = '';
-                totalRupiah.textContent = '';
             }
         }
 
@@ -141,6 +139,16 @@
         });
         bulanCheckboxes.forEach(cb => {
             cb.addEventListener('change', updateJumlahBayar);
+        });
+
+        // Format input saat user mengetik
+        jumlahBayarInput.addEventListener('input', function(e) {
+            jumlahBayarInput.value = formatRupiah(jumlahBayarInput.value);
+        });
+
+        // Saat submit, hanya angka yang dikirim
+        jumlahBayarInput.form && jumlahBayarInput.form.addEventListener('submit', function() {
+            jumlahBayarInput.value = jumlahBayarInput.value.replace(/[^0-9]/g, '');
         });
 
         // Inisialisasi saat halaman pertama kali dibuka

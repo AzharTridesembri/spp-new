@@ -18,9 +18,19 @@ class SiswaController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $siswas = Siswa::with(['kelas', 'spp', 'user'])->orderBy('nama')->paginate(10);
+        $query = Siswa::with(['kelas', 'spp', 'user'])->orderBy('nama');
+
+        if ($request->has('search')) {
+            $searchTerm = $request->search;
+            $query->where('nama', 'like', '%' . $searchTerm . '%')
+                ->orWhere('nisn', 'like', '%' . $searchTerm . '%')
+                ->orWhere('nis', 'like', '%' . $searchTerm . '%');
+        }
+
+        $siswas = $query->paginate(10);
+
         return view('admin.siswa.index', compact('siswas'));
     }
 
@@ -101,123 +111,100 @@ class SiswaController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(Siswa $siswa)
     {
-        $siswa = Siswa::with(['kelas', 'spp', 'user', 'pembayaran'])->findOrFail($id);
         return view('admin.siswa.show', compact('siswa'));
     }
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
+    public function edit(Siswa $siswa)
     {
-        $siswa = Siswa::with('user')->findOrFail($id);
-        $kelas = Kelas::orderBy('nama_kelas')->get();
-        $spps = Spp::orderBy('tahun', 'desc')->get();
-
+        $kelas = \App\Models\Kelas::all();
+        $spps = \App\Models\Spp::all();
         return view('admin.siswa.edit', compact('siswa', 'kelas', 'spps'));
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, Siswa $siswa)
     {
-        $siswa = Siswa::with('user')->findOrFail($id);
-
-        $validator = Validator::make($request->all(), [
-            'nisn' => ['required', 'string', 'size:10', Rule::unique('siswas')->ignore($siswa->id)],
-            'nis' => ['required', 'string', 'size:8', Rule::unique('siswas')->ignore($siswa->id)],
-            'nama' => 'required|string|max:35',
-            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($siswa->user_id)],
-            'password' => 'nullable|string|min:8',
+        $request->validate([
+            'nisn' => 'required|string|unique:siswas,nisn,' . $siswa->id,
+            'nis' => 'required|string|unique:siswas,nis,' . $siswa->id,
+            'nama' => 'required|string|max:255',
             'kelas_id' => 'required|exists:kelas,id',
             'alamat' => 'required|string',
-            'no_telp' => 'required|string|max:13',
+            'no_telp' => 'required|string|max:15',
             'spp_id' => 'required|exists:spps,id',
         ]);
 
-        if ($validator->fails()) {
-            return redirect()
-                ->route('admin.siswa.edit', $siswa->id)
-                ->withErrors($validator)
-                ->withInput();
-        }
+        $siswa->update($request->all());
 
-        DB::beginTransaction();
-
-        try {
-            // Update user
-            $userData = [
-                'name' => $request->nama,
-                'email' => $request->email,
-            ];
-
-            // Update password hanya jika ada input baru
-            if ($request->filled('password')) {
-                $userData['password'] = Hash::make($request->password);
-            }
-
-            $siswa->user->update($userData);
-
-            // Update siswa
-            $siswa->update([
-                'nisn' => $request->nisn,
-                'nis' => $request->nis,
-                'nama' => $request->nama,
-                'kelas_id' => $request->kelas_id,
-                'alamat' => $request->alamat,
-                'no_telp' => $request->no_telp,
-                'spp_id' => $request->spp_id,
-            ]);
-
-            DB::commit();
-
-            return redirect()
-                ->route('admin.siswa.index')
-                ->with('success', 'Data siswa berhasil diperbarui.');
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-
-            return redirect()
-                ->route('admin.siswa.edit', $siswa->id)
-                ->with('error', 'Gagal memperbarui data siswa: ' . $e->getMessage())
-                ->withInput();
-        }
+        return redirect()->route('admin.siswa.index')->with('success', 'Data siswa berhasil diperbarui.');
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(Siswa $siswa)
     {
-        $siswa = Siswa::with('user')->findOrFail($id);
+        $siswa->delete();
 
-        try {
-            DB::beginTransaction();
+        return redirect()->route('admin.siswa.index')->with('success', 'Data siswa berhasil dihapus.');
+    }
 
-            // Hapus siswa
-            $siswa->delete();
+    /**
+     * Display payment history for a specific student.
+     */
+    public function paymentHistory(Siswa $siswa)
+    {
+        // Ambil semua pembayaran untuk siswa ini
+        $payments = $siswa->pembayaran()->orderBy('tahun_dibayar', 'asc')->orderBy('bulan_dibayar', 'asc')->get();
 
-            // Hapus user terkait
-            if ($siswa->user) {
-                $siswa->user->delete();
-            }
+        // Daftar semua bulan dalam setahun
+        $allMonths = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
 
-            DB::commit();
+        // Kelompokkan pembayaran per tahun
+        $paymentsByYear = $payments->groupBy('tahun_dibayar');
 
-            return redirect()
-                ->route('admin.siswa.index')
-                ->with('success', 'Siswa berhasil dihapus.');
+        // Siapkan data riwayat pembayaran per tahun
+        $history = [];
+        foreach ($paymentsByYear as $year => $paymentsInYear) {
+            $paidMonths = $paymentsInYear->pluck('bulan_dibayar')->toArray();
+            $unpaidMonths = array_diff($allMonths, $paidMonths);
 
-        } catch (\Exception $e) {
-            DB::rollBack();
+            // Urutkan bulan yang belum dibayar sesuai urutan kalender
+            usort($unpaidMonths, function ($a, $b) use ($allMonths) {
+                return array_search($a, $allMonths) - array_search($b, $allMonths);
+            });
 
-            return redirect()
-                ->route('admin.siswa.index')
-                ->with('error', 'Siswa tidak dapat dihapus karena masih memiliki data pembayaran.');
+            // Urutkan bulan yang sudah dibayar sesuai urutan kalender
+            usort($paidMonths, function ($a, $b) use ($allMonths) {
+                return array_search($a, $allMonths) - array_search($b, $allMonths);
+            });
+
+
+            $history[$year] = [
+                'paid' => $paidMonths,
+                'unpaid' => $unpaidMonths,
+            ];
         }
+
+        // Jika siswa belum punya pembayaran, tampilkan semua bulan sebagai belum dibayar untuk tahun sekarang
+        if ($payments->isEmpty()) {
+            $currentYear = date('Y');
+            $history[$currentYear] = [
+                'paid' => [],
+                'unpaid' => $allMonths
+            ];
+        }
+
+        // Sort history by year
+        krsort($history);
+
+        return view('admin.siswa.payment_history', compact('siswa', 'history'));
     }
 }

@@ -42,9 +42,6 @@
                     <td class="py-4 px-4">{{ $item->email }}</td>
                     <td class="py-4 px-4 text-center capitalize">{{ $item->role }}</td>
                     <td class="py-4 px-4 flex items-center justify-center space-x-2">
-                        <a href="{{ route('admin.users.show', $item->id) }}" class="p-2 bg-blue-100 text-blue-600 rounded hover:bg-blue-200" title="Detail">
-                            <i class="fas fa-eye"></i>
-                        </a>
                         <a href="{{ route('admin.users.edit', $item->id) }}" class="p-2 bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200" title="Edit">
                             <i class="fas fa-edit"></i>
                         </a>

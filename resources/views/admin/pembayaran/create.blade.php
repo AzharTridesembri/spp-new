@@ -71,7 +71,7 @@
 
                             <div>
                                 <label for="jumlah_bayar" class="block text-sm font-medium text-gray-700 mb-1">Jumlah Bayar *</label>
-                                <input type="text" name="jumlah_bayar" id="jumlah_bayar" value="{{ old('jumlah_bayar') }}" class="w-full rounded-md shadow-sm border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 @error('jumlah_bayar') border-red-500 @enderror" readonly>
+                                <input type="text" name="jumlah_bayar" id="jumlah_bayar" value="{{ old('jumlah_bayar') }}" class="w-full rounded-md shadow-sm border-gray-300 focus:border-green-500 focus:ring-green-500 text-green-600 font-bold" autocomplete="off">
                                 @error('jumlah_bayar')
                                     <span class="text-red-500 text-xs">{{ $message }}</span>
                                 @enderror
@@ -94,35 +94,50 @@
         document.addEventListener("DOMContentLoaded", function() {
             const siswaSelect = document.getElementById('siswa_id');
             const tahunInput = document.getElementById('tahun_dibayar');
-            const bulanCheckboxes = document.querySelectorAll('input[name="bulan_dibayar[]"]');
+            const bulanCheckboxes = document.querySelectorAll('input[name=\"bulan_dibayar[]\"]');
             const jumlahBayarInput = document.getElementById('jumlah_bayar');
 
+            function formatRupiah(angka) {
+                angka = angka.replace(/[^0-9]/g, '');
+                if (!angka) return '';
+                return 'Rp ' + parseInt(angka, 10).toLocaleString('id-ID');
+            }
+
             function updateJumlahBayar() {
+                console.log('updateJumlahBayar dipanggil');
                 const selectedOption = siswaSelect.options[siswaSelect.selectedIndex];
+                console.log('Selected option:', selectedOption);
                 if (selectedOption.value !== '') {
-                    const sppNominal = parseInt(selectedOption.getAttribute('data-spp'));
-                    const selectedMonths = document.querySelectorAll('input[name="bulan_dibayar[]"]:checked:not(:disabled)').length;
+                    const sppNominal = parseInt(selectedOption.getAttribute('data-spp')) || 0;
+                    console.log('SPP Nominal:', sppNominal);
+                    const selectedMonths = document.querySelectorAll('input[name=\"bulan_dibayar[]\"]:checked:not(:disabled)').length;
+                    console.log('Selected months:', selectedMonths);
                     const totalBayar = sppNominal * selectedMonths;
-                    jumlahBayarInput.value = totalBayar.toLocaleString('id-ID');
+                    console.log('Total bayar:', totalBayar);
+                    jumlahBayarInput.value = totalBayar ? formatRupiah(totalBayar.toString()) : '';
+                    console.log('Jumlah bayar input value:', jumlahBayarInput.value);
                 } else {
                     jumlahBayarInput.value = '';
                 }
             }
 
             function updateBulanCheckboxes() {
+                console.log('updateBulanCheckboxes dipanggil');
                 const siswaId = siswaSelect.value;
                 const tahun = tahunInput.value;
+                console.log('Siswa ID:', siswaId, 'Tahun:', tahun);
                 if (!siswaId || !tahun) return;
 
                 fetch(`/api/pembayaran/bulan-sudah-dibayar?siswa_id=${siswaId}&tahun=${tahun}`)
                     .then(response => response.json())
                     .then(sudahDibayar => {
+                        console.log('Bulan sudah dibayar:', sudahDibayar);
                         bulanCheckboxes.forEach(cb => {
                             const label = cb.parentElement.querySelector('label');
                             if (sudahDibayar.includes(cb.value)) {
                                 cb.checked = true;
                                 cb.disabled = true;
-                                label.innerHTML = cb.value + ' <span style="color:green;font-size:11px;">(Sudah dibayar)</span>';
+                                label.innerHTML = cb.value + ' <span style=\"color:green;font-size:11px;\">(Sudah dibayar)</span>';
                             } else {
                                 cb.checked = false;
                                 cb.disabled = false;
@@ -130,6 +145,9 @@
                             }
                         });
                         updateJumlahBayar();
+                    })
+                    .catch(error => {
+                        console.error('Error fetching bulan sudah dibayar:', error);
                     });
             }
 
@@ -141,6 +159,16 @@
             });
             bulanCheckboxes.forEach(cb => {
                 cb.addEventListener('change', updateJumlahBayar);
+            });
+
+            // Format input saat user mengetik
+            jumlahBayarInput.addEventListener('input', function(e) {
+                jumlahBayarInput.value = formatRupiah(jumlahBayarInput.value);
+            });
+
+            // Saat submit, hanya angka yang dikirim
+            jumlahBayarInput.form && jumlahBayarInput.form.addEventListener('submit', function() {
+                jumlahBayarInput.value = jumlahBayarInput.value.replace(/[^0-9]/g, '');
             });
 
             // Inisialisasi saat halaman pertama kali dibuka

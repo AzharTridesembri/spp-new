@@ -116,5 +116,49 @@
         @endforeach
     </div>
 </div>
+
+{{-- Payment History By Year Card --}}
+<div class="bg-white rounded-lg shadow p-6 mt-6">
+    <h2 class="text-lg font-semibold text-gray-700 mb-4">Riwayat Pembayaran SPP per Tahun</h2>
+
+    @forelse ($historyByYear as $year => $data)
+        <div class="mb-6 p-4 border rounded-md bg-gray-50">
+            <h3 class="font-semibold text-lg mb-3 text-gray-800">Tahun: {{ $year }}</h3>
+
+            {{-- Bulan Sudah Dibayar --}}
+            <div class="mb-4">
+                <p class="font-semibold mb-2 text-green-700">Bulan Sudah Dibayar ({{ count($data['paid']) }}):</p>
+                @if(count($data['paid']) > 0)
+                    <div class="flex flex-wrap gap-2">
+                        @foreach($data['paid'] as $month)
+                            <span class="bg-green-200 text-green-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">{{ $month }}</span>
+                        @endforeach
+                    </div>
+                @else
+                    <p class="text-gray-600 text-sm">Belum ada pembayaran untuk tahun ini.</p>
+                @endif
+            </div>
+
+            {{-- Bulan Belum Dibayar --}}
+            <div>
+                 <p class="font-semibold mb-2 text-red-700">Bulan Belum Dibayar ({{ count($data['unpaid']) }}):</p>
+                 @if(count($data['unpaid']) > 0)
+                     <div class="flex flex-wrap gap-2">
+                         @foreach($data['unpaid'] as $month)
+                             <span class="bg-red-200 text-red-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">{{ $month }}</span>
+                         @endforeach
+                     </div>
+                 @else
+                     <p class="text-gray-600 text-sm">Semua bulan sudah dibayar untuk tahun ini.</p>
+                 @endif
+            </div>
+        </div>
+    @empty
+        <div class="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-md">
+            Belum ada riwayat pembayaran per tahun untuk siswa ini.
+        </div>
+    @endforelse
+
+</div>
 @endif
 @endsection

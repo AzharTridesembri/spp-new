@@ -70,7 +70,7 @@ class PembayaranController extends Controller
         // Simpan pembayaran per bulan
         foreach ($request->bulan_dibayar as $bulan) {
             Pembayaran::create([
-                'user_id' => 1,
+                'user_id' => auth()->id(),
                 'siswa_id' => $request->siswa_id,
                 'tanggal_bayar' => $request->tanggal_bayar,
                 'bulan_dibayar' => $bulan,
@@ -168,9 +168,12 @@ class PembayaranController extends Controller
 
         $pembayaran = $query->latest()->get();
 
-        if ($request->has('export_pdf')) {
+        if ($request->has('download')) {
             $pdf = PDF::loadView('petugas.pembayaran.laporan', compact('pembayaran', 'tanggal', 'bulan', 'tahun'));
             return $pdf->download('laporan-pembayaran-' . time() . '.pdf');
+        } elseif ($request->has('preview')) {
+            $pdf = PDF::loadView('petugas.pembayaran.laporan', compact('pembayaran', 'tanggal', 'bulan', 'tahun'));
+            return $pdf->stream('laporan-pembayaran-' . time() . '.pdf');
         }
 
         $bulanList = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];

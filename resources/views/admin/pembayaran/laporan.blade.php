@@ -62,8 +62,10 @@
 <body>
     <div class="header">
         <div class="title">LAPORAN PEMBAYARAN SPP</div>
-        <div class="subtitle">SMK NEGERI TEKNOLOGI</div>
-        <div class="subtitle">Jl. Pendidikan No. 123, Telp. (021) 1234567</div>
+        <div class="subtitle">SMK ANNUR DEPOK</div>
+        <div class="subtitle">Jalan Masjid Al Barkah no 6 Kekupu, Kelurahan Pasir Putih, Kecamatan Sawangan, Kota Depok Jawa Barat 0251-861-8755
+
+            smkannur2003@gmail.com</div>
     </div>
     
     <div class="info">
@@ -119,7 +121,7 @@
                     <td>{{ $item->user->name }}</td>
                     <td>{{ $item->siswa->nama }}</td>
                     <td>{{ $item->siswa->nisn }}</td>
-                    <td>{{ $item->siswa->kelas->nama }}</td>
+                    <td>{{ $item->siswa->kelas->nama_kelas }}</td>
                     <td>{{ date('d/m/Y', strtotime($item->tanggal_bayar)) }}</td>
                     <td>{{ $item->bulan_dibayar }}/{{ $item->tahun_dibayar }}</td>
                     <td>Rp {{ number_format($item->jumlah_bayar, 0, ',', '.') }}</td>

@@ -35,6 +35,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::resource('/kelas', KelasController::class);
     Route::resource('/spp', SppController::class);
     Route::resource('/siswa', SiswaController::class);
+    Route::get('/siswa/{siswa}/payment-history', [SiswaController::class, 'paymentHistory'])->name('siswa.paymentHistory');
     Route::resource('/pembayaran', AdminPembayaranController::class);
     Route::get('/laporan', [AdminPembayaranController::class, 'generateReport'])->name('laporan');
     Route::get('/api/pembayaran/bulan-sudah-dibayar', [AdminPembayaranController::class, 'bulanSudahDibayar']);
@@ -45,12 +46,23 @@ Route::prefix('petugas')->name('petugas.')->group(function () {
     Route::get('/dashboard', [PetugasDashboardController::class, 'index'])->name('dashboard');
     Route::resource('/pembayaran', PetugasPembayaranController::class);
     Route::get('/laporan', [PetugasPembayaranController::class, 'generateReport'])->name('laporan');
+
+    Route::prefix('siswa')->name('siswa.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Petugas\SiswaController::class, 'index'])->name('index');
+        Route::get('/{siswa}/payment-history', [App\Http\Controllers\Petugas\SiswaController::class, 'paymentHistory'])->name('paymentHistory');
+    });
 });
 
 // Siswa Routes - tanpa middleware auth
 Route::prefix('siswa')->name('siswa.')->group(function () {
     Route::get('/dashboard', [SiswaDashboardController::class, 'index'])->name('dashboard');
     Route::resource('/history', HistoryController::class)->only(['index', 'show']);
+});
+
+// Routes untuk laporan
+Route::prefix('reports')->group(function () {
+    Route::get('/', [App\Http\Controllers\ReportController::class, 'index'])->name('reports.index');
+    Route::get('/custom', [App\Http\Controllers\ReportController::class, 'customReport'])->name('reports.custom');
 });
 
 require __DIR__ . '/auth.php';
